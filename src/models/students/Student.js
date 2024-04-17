@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 
-export class Student {
+export default class Student {
   constructor(name, age, email, code, grade) {
     this.id = this.generateId();
     this.name = name;

@@ -1,54 +1,102 @@
-import { StudentsRepository } from "../models/students/StudentsRepository.js";
-import { Student } from "../models/students/Student.js";
+import StudentsRepository  from "../models/students/StudentsRepository.js";
+import  Student  from "../models/students/Student.js";
+
 
 const studentsRepository = new StudentsRepository();
 
-export const getStudents = (req, res) => {
-  const students = studentsRepository.getStudents();
+export const getStudents = async (req, res) => {
+
+  const students = await studentsRepository.getStudents();
+
   if (students.length) {
     return res.status(200).json(students);
   }
-  return res.status(200).json({ message: "Não há estudantes cadastrados" });
+  return res.status(200).json({
+    message: "Não há estudantes cadastrados"
+  });
 };
 
-export const getStudent = (req, res) => {
-  const { id } = req.params;
-  const student = studentsRepository.getStudentById(id);
+export const getStudentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const student = await studentsRepository.getStudentById(id);
 
-  if (!student) res.status(404).send({ message: "Estudante não encontrado!" });
+    if (!student) {
+      return res.status(404).send({
+        message: "Estudante não encontrado"
+      });
+    }
 
-  return res.send(student);
+    return res.status(200).send(student);
+  } catch (err) {
+    return res.status(500).send({
+      message: "Erro ao buscar estudante",
+      error: err.message
+    });
+  }
 };
 
-export const createStudent = (req, res) => {
+export const createStudent = async (req, res) => {
   const { name, age, email, code, grade } = req.body;
   const student = new Student(name, age, email, code, grade);
 
-  studentsRepository.addStudent(student);
+  await studentsRepository.addStudent(student);
 
   return res.status(201).send(student);
 };
 
-export const updateStudent = (req, res) => {
-  const { id } = req.params;
-  const { name, age, email, code, grade } = req.body;
+export const updateStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, age, email, code, grade } = req.body;
+    const studentById = await studentsRepository.getStudentById(id);
 
-  const student = studentsRepository.getStudentById(id);
+    if (!studentById) {
+      return res.status(404).send({
+        message: "Estudante não encontrado"
+      });
+    }
 
-  if (!student) res.status(404).send({ message: "Estudante não encontrado!" });
+    const studentByEmail = await studentsRepository.getStudentById(email);
 
-  studentsRepository.updateStudent(id, name, age, email, code, grade);
+    if (studentByEmail && studentByEmail.id !== id) {
+      return res.status(409).send({
+        message: "Email já cadastrado"
+      });
+    }
 
-  return res.send(student);
+    studentsRepository.updateStudent(id, name, age, email, code, grade);
+
+    return res.status(200).send({ message: 'Estudante atualizado com sucesso!' });
+  } catch (err) {
+    return res.status(500).send({
+      message: "Erro ao atualizar estudante",
+      error: err.message
+    });
+  }
 };
 
-export const deleteStudent = (req, res) => {
-  const { id } = req.params;
-  const student = studentsRepository.getStudentById(id);
+export const deleteStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const student = await studentsRepository.getStudentById(id);
 
-  if (!student) res.status(404).send({ message: "Estudante não encontrado!" });
+    if (!student) {
+      return res.status(404).send({
+        message: "Estudante não encontrado!"
+      });
+    }
 
-  studentsRepository.deleteStudent(id);
-
-  return res.send(student);
+    await studentsRepository.deleteStudent(id);
+    return res.send(student);
+  } catch (err) {
+    return res.status(500).send({
+      message: "Erro ao deletar estudante",
+      error: err.message
+    });
+  }
 };
+
+
+
+
